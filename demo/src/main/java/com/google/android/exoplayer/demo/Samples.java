@@ -126,7 +126,9 @@ import java.util.Locale;
     new Sample("Apple ID3 metadata", "http://devimages.apple.com/samplecode/adDemo/ad.m3u8",
         PlayerActivity.TYPE_HLS),
 
-    new Sample("MeteoMedia HLS", "http://c.brightcove.com/services/mobile/streaming/index/master.m3u8?videoId=4357737167001&pubId=3281700252001",PlayerActivity.TYPE_HLS)
+
+    
+
   };
 
   public static final Sample[] MISC = new Sample[] {
