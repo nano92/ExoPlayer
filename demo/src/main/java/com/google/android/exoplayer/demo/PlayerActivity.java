@@ -32,6 +32,7 @@ import com.google.android.exoplayer.metadata.TxxxMetadata;
 import com.google.android.exoplayer.text.CaptionStyleCompat;
 import com.google.android.exoplayer.text.Cue;
 import com.google.android.exoplayer.text.SubtitleLayout;
+import com.google.android.exoplayer.upstream.cache.Cache;
 import com.google.android.exoplayer.util.DebugTextViewHelper;
 import com.google.android.exoplayer.util.Util;
 import com.google.android.exoplayer.util.VerboseLogUtil;
@@ -118,8 +119,11 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
   private int contentType;
   private String contentId;
 
+  public static Uri u;
+
   private AudioCapabilitiesReceiver audioCapabilitiesReceiver;
   private AudioCapabilities audioCapabilities;
+
 
   // Activity lifecycle
 
@@ -129,6 +133,7 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
 
     Intent intent = getIntent();
     contentUri = intent.getData();
+    u= contentUri;
     contentType = intent.getIntExtra(CONTENT_TYPE_EXTRA, -1);
     contentId = intent.getStringExtra(CONTENT_ID_EXTRA);
 
@@ -237,7 +242,7 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
     String userAgent = Util.getUserAgent(this, "ExoPlayerDemo");
     switch (contentType) {
       case TYPE_SS:
-        return new SmoothStreamingRendererBuilder(this, userAgent, contentUri.toString(),
+        return new SmoothStreamingRendererBuilder(this, userAgent, contentUri.toString(), //Context ???????????? what is this
             new SmoothStreamingTestMediaDrmCallback());
       case TYPE_DASH:
         return new DashRendererBuilder(this, userAgent, contentUri.toString(),
@@ -253,6 +258,7 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
 
   private void preparePlayer() {
     if (player == null) {
+      //System.out.println(contentUri.toString());
       player = new DemoPlayer(getRendererBuilder());
       player.addListener(this);
       player.setCaptionListener(this);
@@ -300,19 +306,19 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
     String text = "playWhenReady=" + playWhenReady + ", playbackState=";
     switch(playbackState) {
       case ExoPlayer.STATE_BUFFERING:
-        text += "buffering";
+        text += "buffering=" ;
         break;
       case ExoPlayer.STATE_ENDED:
         text += "ended";
         break;
       case ExoPlayer.STATE_IDLE:
-        text += "idle";
+        text += "idle" ;
         break;
       case ExoPlayer.STATE_PREPARING:
         text += "preparing";
         break;
       case ExoPlayer.STATE_READY:
-        text += "ready";
+        text += "ready" + player.getPlayWhenReady() ;
         break;
       default:
         text += "unknown";
@@ -341,7 +347,7 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
   public void onVideoSizeChanged(int width, int height, float pixelWidthAspectRatio) {
     shutterView.setVisibility(View.GONE);
     videoFrame.setAspectRatio(
-        height == 0 ? 1 : (width * pixelWidthAspectRatio) / height);
+            height == 0 ? 1 : (width * pixelWidthAspectRatio) / height);
   }
 
   // User controls

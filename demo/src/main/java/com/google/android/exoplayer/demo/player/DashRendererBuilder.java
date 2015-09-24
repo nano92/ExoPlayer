@@ -52,6 +52,8 @@ import com.google.android.exoplayer.upstream.DefaultAllocator;
 import com.google.android.exoplayer.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer.upstream.DefaultUriDataSource;
 import com.google.android.exoplayer.upstream.UriDataSource;
+import com.google.android.exoplayer.upstream.cache.Cache;
+import com.google.android.exoplayer.upstream.cache.CacheDataSource;
 import com.google.android.exoplayer.util.ManifestFetcher;
 import com.google.android.exoplayer.util.Util;
 
@@ -136,6 +138,7 @@ public class DashRendererBuilder implements RendererBuilder {
     private final ManifestFetcher<MediaPresentationDescription> manifestFetcher;
     private final UriDataSource manifestDataSource;
 
+
     private boolean canceled;
     private MediaPresentationDescription manifest;
     private long elapsedRealtimeOffset;
@@ -150,6 +153,7 @@ public class DashRendererBuilder implements RendererBuilder {
       MediaPresentationDescriptionParser parser = new MediaPresentationDescriptionParser();
       manifestDataSource = new DefaultUriDataSource(context, userAgent);
       manifestFetcher = new ManifestFetcher<>(url, manifestDataSource, parser);
+
     }
 
     public void init() {
@@ -340,6 +344,7 @@ public class DashRendererBuilder implements RendererBuilder {
 
       // Build the text chunk sources.
       DataSource textDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
+      ///////////////////////////////////////////////////////
       FormatEvaluator textEvaluator = new FormatEvaluator.FixedEvaluator();
       List<ChunkSource> textChunkSourceList = new ArrayList<>();
       List<String> textTrackNameList = new ArrayList<>();

@@ -23,6 +23,7 @@ import com.google.android.exoplayer.MediaCodecVideoTrackRenderer;
 import com.google.android.exoplayer.TrackRenderer;
 import com.google.android.exoplayer.audio.AudioCapabilities;
 import com.google.android.exoplayer.chunk.VideoFormatSelectorUtil;
+import com.google.android.exoplayer.demo.PlayerActivity;
 import com.google.android.exoplayer.demo.player.DemoPlayer.RendererBuilder;
 import com.google.android.exoplayer.hls.HlsChunkSource;
 import com.google.android.exoplayer.hls.HlsMasterPlaylist;
@@ -32,15 +33,23 @@ import com.google.android.exoplayer.hls.HlsSampleSource;
 import com.google.android.exoplayer.metadata.Id3Parser;
 import com.google.android.exoplayer.metadata.MetadataTrackRenderer;
 import com.google.android.exoplayer.text.eia608.Eia608TrackRenderer;
+import com.google.android.exoplayer.upstream.DataSink;
 import com.google.android.exoplayer.upstream.DataSource;
+import com.google.android.exoplayer.upstream.DataSpec;
 import com.google.android.exoplayer.upstream.DefaultAllocator;
 import com.google.android.exoplayer.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer.upstream.DefaultUriDataSource;
+import com.google.android.exoplayer.upstream.cache.Cache;
+import com.google.android.exoplayer.upstream.cache.CacheDataSource;
+import com.google.android.exoplayer.upstream.cache.CacheSpan;
+import com.google.android.exoplayer.upstream.cache.LeastRecentlyUsedCacheEvictor;
+import com.google.android.exoplayer.upstream.cache.SimpleCache;
 import com.google.android.exoplayer.util.ManifestFetcher;
 import com.google.android.exoplayer.util.ManifestFetcher.ManifestCallback;
 
 import android.content.Context;
 import android.media.MediaCodec;
+import android.net.Uri;
 import android.os.Handler;
 
 import java.io.IOException;
@@ -54,12 +63,15 @@ public class HlsRendererBuilder implements RendererBuilder {
   private static final int BUFFER_SEGMENT_SIZE = 256 * 1024;
   private static final int BUFFER_SEGMENTS = 64;
 
+
   private final Context context;
   private final String userAgent;
   private final String url;
   private final AudioCapabilities audioCapabilities;
 
   private AsyncRendererBuilder currentAsyncBuilder;
+
+
 
   public HlsRendererBuilder(Context context, String userAgent, String url,
       AudioCapabilities audioCapabilities) {
@@ -124,6 +136,34 @@ public class HlsRendererBuilder implements RendererBuilder {
       player.onRenderersError(e);
     }
 
+    private DataSource CachedData(DataSource dataSource, int playbackState){
+      Cache cache = new SimpleCache(context.getCacheDir(),new LeastRecentlyUsedCacheEvictor(500000000) );
+
+
+      CacheDataSource cacheDataSource;
+
+        if(playbackState == DemoPlayer.STATE_PREPARING){
+          cacheDataSource = new CacheDataSource(cache,dataSource,false,false, 500000000);
+          try {
+            cacheDataSource.open(new DataSpec(PlayerActivity.u));
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+
+          try {
+            cacheDataSource.close();
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+
+        }else{
+
+          return dataSource;
+        }
+
+      return cacheDataSource;
+    }
+
     @Override
     public void onSingleManifest(HlsPlaylist manifest) {
       if (canceled) {
@@ -151,7 +191,7 @@ public class HlsRendererBuilder implements RendererBuilder {
       }
 
       DataSource dataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
-      HlsChunkSource chunkSource = new HlsChunkSource(dataSource, url, manifest, bandwidthMeter,
+      HlsChunkSource chunkSource = new HlsChunkSource(CachedData(dataSource,player.getPlaybackState()), url, manifest, bandwidthMeter,
           variantIndices, HlsChunkSource.ADAPTIVE_MODE_SPLICE, audioCapabilities);
       HlsSampleSource sampleSource = new HlsSampleSource(chunkSource, loadControl,
           BUFFER_SEGMENTS * BUFFER_SEGMENT_SIZE, mainHandler, player, DemoPlayer.TYPE_VIDEO);
